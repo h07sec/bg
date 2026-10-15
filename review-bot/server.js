@@ -55,6 +55,12 @@ function fmtSubmission(id, s) {
   return `New recipe submission\nID: ${id}\nFruit: ${s.fruit}\n\n${lines}`;
 }
 
+// --- Root route handler ---
+
+app.get("/", (req, res) => {
+  res.json({ status: "online", message: "Review Bot Backend is running!" });
+});
+
 // --- Frontend-facing API ---
 
 app.post("/submit", async (req, res) => {
