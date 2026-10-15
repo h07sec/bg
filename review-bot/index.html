@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Command Prompt - Access Portal</title>
+<style>
+:root{
+  --bg:#0c0c0c; --fg:#cccccc; --white:#f2f2f2; --red:#e74856; --yellow:#f9f1a5; --green:#16c60c; --blue:#3b78ff;
+  --title:#1f1f1f; --border:#3a3a3a;
+  color-scheme:dark; box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:#202020;color:var(--fg);font-family:Consolas,"Lucida Console","Cascadia Mono",ui-monospace,Menlo,"Courier New",monospace;font-size:clamp(13px,2.5vw,16px);line-height:1.3}
+.win{display:flex;flex-direction:column;height:100%;max-width:980px;margin:0 auto;background:var(--bg);border:1px solid var(--border)}
+.bar{display:flex;align-items:center;justify-content:space-between;background:var(--title);height:34px;flex:none;user-select:none;font-family:"Segoe UI",system-ui,sans-serif;font-size:12px;color:#e6e6e6}
+.bar .t{display:flex;align-items:center;gap:8px;padding-left:10px}
+.ico{width:16px;height:16px;background:#000;border:1px solid #aaa;display:grid;place-items:center;font:700 9px Consolas,monospace;color:#ddd}
+.ctl{display:flex;height:100%}
+.ctl span{width:46px;display:grid;place-items:center;font-size:13px}
+.ctl span:last-child:hover{background:#c42b1c}
+.term{flex:1;overflow:auto;padding:6px 10px 40px}
+pre{margin:0;font:inherit;white-space:pre-wrap;word-break:break-word}
+.y{color:var(--yellow)}.r{color:var(--red)}.g{color:var(--green)}.w{color:var(--white)}
+.line{display:flex;align-items:center;white-space:pre}
+.line label{white-space:pre;cursor:text}
+#k{flex:1;min-width:0;background:transparent;border:0;outline:0;color:var(--fg);font:inherit;caret-color:var(--fg);caret-shape:underscore;padding:0}
+#k:disabled{opacity:1}
+.us{display:inline-block;width:.62em;height:2px;background:var(--fg);vertical-align:baseline;animation:b 1s steps(1) infinite;margin-left:1px}
+@keyframes b{50%{opacity:0}}
+.lnk{background:none;border:0;padding:0;color:var(--blue);cursor:pointer;font:inherit;text-decoration:underline}
+.lnk:hover{color:#6a9bff}
+a{color:var(--white);text-decoration:none}
+a:hover,a:focus-visible{background:var(--fg);color:var(--bg)}
+:focus-visible{outline:1px dotted var(--fg);outline-offset:2px}
+.opt{display:flex;gap:1ch;background:none;border:0;padding:1px 0;color:var(--fg);font:inherit;cursor:pointer;text-align:left;width:100%}
+.opt:hover,.opt:focus-visible{background:var(--fg);color:var(--bg)}
+.opt b{font-weight:normal;color:var(--white)}
+.opt:hover b,.opt:focus-visible b{color:var(--bg)}
+#sudo{display:none}
+#sudo.show{display:block}
+#processing{display:none}
+#processing.show{display:block}
+#result2{display:none}
+#result2.show{display:block}
+.spin{display:inline-block;width:1ch}
+.big{font-size:1.3em;margin:10px 0}
+#recipe{display:none}
+#recipe.show{display:block}
+.field{display:flex;gap:1ch;align-items:baseline;margin:3px 0}
+.field label{white-space:pre;color:var(--white)}
+.field input{flex:1;min-width:0;background:transparent;border:0;border-bottom:1px dotted #555;color:var(--fg);font:inherit;outline:0;padding:1px 2px}
+.field input:focus{border-bottom-color:var(--fg)}
+#steps{display:none}
+#steps.show{display:block}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:20px;z-index:20}
+.ov.show{display:flex}
+.dlg{width:min(420px,100%);background:var(--bg);border:1px solid #6b6b6b;box-shadow:0 10px 40px rgba(0,0,0,.7)}
+.dlg .dh{background:var(--title);padding:6px 10px;font-family:"Segoe UI",system-ui,sans-serif;font-size:12px;color:#e6e6e6;display:flex;justify-content:space-between}
+.dlg .db{padding:16px 14px 6px}
+.dlg .da{display:flex;gap:12px;justify-content:flex-end;padding:10px 14px 14px}
+.dbtn{background:#2b2b2b;border:1px solid #6b6b6b;color:var(--fg);font:inherit;padding:4px 18px;cursor:pointer;min-width:84px}
+.dbtn:hover,.dbtn:focus-visible{background:var(--fg);color:var(--bg);outline:none}
+#steps ol{margin:8px 0 0;padding:0;list-style:none}
+#steps li{margin:0 0 6px;display:flex;gap:1ch}
+#steps li b{color:var(--white);font-weight:normal;flex:none;min-width:3ch}
+#steps li span em{font-style:normal;color:var(--white)}
+#portal{display:none}
+#portal.show{display:block}
+#gate.gone{display:none}
+::selection{background:var(--fg);color:var(--bg)}
+@media (prefers-reduced-motion:reduce){.us{animation:none}}
+@media (max-width:520px){.ctl span{width:34px}}
+</style>
+</head>
+<body>
+<div class="win">
+  <div class="bar">
+    <div class="t"><span class="ico" aria-hidden="true">C:\</span><span>Command Prompt</span></div>
+    <div class="ctl" aria-hidden="true"><span>&#8212;</span><span>&#9633;</span><span>&#10005;</span></div>
+  </div>
+  <div class="term" id="term">
+
+    <div id="gate">
+      <pre id="log" aria-live="polite"></pre>
+      <form id="f" autocomplete="off" novalidate>
+        <div class="line" id="pline" style="display:none">
+          <label for="k">Enter access key: </label>
+          <input id="k" type="password" spellcheck="false" autocapitalize="off" autocomplete="off" disabled aria-describedby="status">
+        </div>
+        <pre id="status" role="status"></pre>
+        <div id="tools" style="display:none;margin-top:10px">
+          <button class="lnk" type="submit" id="go">Enter</button>&nbsp;&nbsp;
+          <button class="lnk" type="button" id="eye" aria-pressed="false">Show key</button>
+        </div>
+      </form>
+    </div>
+
+    <div id="portal">
+      <pre id="menu-head"></pre>
+      <div id="menu" role="group" aria-label="Choose an option"></div>
+      <div class="line" style="margin-top:8px"><span id="pr">C:\Portal&gt;</span><span id="typed" class="w"></span><span class="us" aria-hidden="true"></span></div>
+      <pre id="result" role="status" style="margin-top:8px"></pre>
+      <div style="margin-top:14px"><button class="lnk" id="again" style="display:none">Choose again</button><span id="sp" style="display:none">&nbsp;&nbsp;</span><button class="lnk" id="relock">Exit</button></div>
+    </div>
+
+    <div id="steps">
+      <pre id="steps-head"></pre>
+      <ol id="steps-list"></ol>
+      <div class="line" style="margin-top:6px"><span>C:\Portal&gt;</span><span class="us" aria-hidden="true"></span></div>
+      <div style="margin-top:14px"><button class="lnk" id="cont">Continue</button>&nbsp;&nbsp;<button class="lnk" id="back">Back to menu</button>&nbsp;&nbsp;<button class="lnk" id="relock2">Exit</button></div>
+    </div>
+
+    <div id="sudo">
+      <pre id="sudo-log"></pre>
+      <div class="line">
+        <label for="sk">[sudo] password for recipe: </label>
+        <input id="sk" type="password" spellcheck="false" autocapitalize="off" autocomplete="off" aria-describedby="sudo-status">
+      </div>
+      <pre id="sudo-status" role="status"></pre>
+      <div style="margin-top:10px">
+        <button class="lnk" id="sudo-go">Enter</button>&nbsp;&nbsp;
+        <button class="lnk" id="sudo-eye" aria-pressed="false">Show password</button>&nbsp;&nbsp;
+        <button class="lnk" id="sudo-back">Back</button>
+      </div>
+    </div>
+
+    <div id="recipe">
+      <pre id="recipe-head"></pre>
+      <form id="rf" autocomplete="off">
+        <div id="rfields"></div>
+      </form>
+      <pre id="recipe-status" role="status"></pre>
+      <div style="margin-top:12px">
+        <button class="lnk" id="submit-recipe">Submit recipe</button>&nbsp;&nbsp;
+        <button class="lnk" id="relock3">Exit</button>
+      </div>
+    </div>
+
+    <div id="processing">
+      <pre id="proc-log"></pre>
+      <div class="line"><span>Reviewing your answers<span class="spin" id="spin"></span></span></div>
+      <pre class="dim" style="margin-top:8px">This may take a moment. Do not close this window.</pre>
+    </div>
+
+    <div id="result2">
+      <pre id="res-log"></pre>
+      <div class="big" id="res-big"></div>
+      <pre id="res-detail"></pre>
+      <div style="margin-top:14px">
+        <button class="lnk" id="retry" style="display:none">Try again</button>&nbsp;&nbsp;
+        <button class="lnk" id="res-menu">Back to menu</button>&nbsp;&nbsp;
+        <button class="lnk" id="relock4">Exit</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="ov" id="ov">
+  <div class="dlg" role="alertdialog" aria-modal="true" aria-labelledby="dt" aria-describedby="dd">
+    <div class="dh"><span id="dt">Confirm selection</span><span aria-hidden="true">&#10005;</span></div>
+    <div class="db"><pre id="dd"></pre></div>
+    <div class="da"><button class="dbtn" id="yes">Yes</button><button class="dbtn" id="no">No</button></div>
+  </div>
+</div>
+
+<script>
+// Only a SHA-256 hash of the lowercased key is stored. Test key: harbor-7421
+const KEY_HASH="769af9cc6721aaa10280728d2b01da68039463aaf5dc46b2d303ca97cadcabf7";
+const MAX_TRIES=3, LOCK_SECONDS=10;
+const $=id=>document.getElementById(id);
+const log=$("log"),k=$("k"),go=$("go"),status=$("status"),gate=$("gate"),portal=$("portal");
+let tries=0,busy=true;
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+async function sha256(s){
+  const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(s));
+  return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("");
+}
+function add(text,cls){const s=document.createElement("span");if(cls)s.className=cls;s.textContent=text;log.appendChild(s);return s;}
+async function typeCmd(text){
+  const s=add("C:\\Portal>");const t=add("");
+  for(const c of text){t.textContent+=c;if(!reduce)await sleep(55);}
+  add("\n");
+}
+function ready(on){busy=!on;k.disabled=!on;go.disabled=!on;if(on)k.focus();}
+async function boot(){
+  log.textContent="";status.textContent="";$("pline").style.display="none";$("tools").style.display="none";
+  add("Access Portal [Version 1.0.2026.1014]\n");
+  add("(c) Harbor Workspace. All rights reserved.\n\n");
+  await typeCmd("login");
+  add("This system is restricted to authorized users.\n\n");
+  $("pline").style.display="flex";$("tools").style.display="block";
+  ready(true);
+}
+const FRUITS=["mango","apple","cherry","grapes"];
+let picked=false;
+function buildMenu(){
+  picked=false;
+  $("menu-head").textContent="C:\\Portal>choice /c 1234 /m \"Select a fruit\"\n\nSelect a fruit:\n";
+  const m=$("menu");m.textContent="";
+  FRUITS.forEach((f,i)=>{
+    const b=document.createElement("button");b.className="opt";b.type="button";
+    b.innerHTML="<b>"+(i+1)+"</b><span>"+f+"</span>";
+    b.setAttribute("aria-label","Option "+(i+1)+": "+f);
+    b.addEventListener("click",()=>choose(i));m.appendChild(b);
+  });
+  $("typed").textContent="";$("result").textContent="";$("result").className="";
+  $("again").style.display="none";$("sp").style.display="none";
+  const first=m.querySelector(".opt");if(first)first.focus({preventScroll:true});
+}
+let pending=-1;
+function choose(i){
+  if(picked)return;picked=true;pending=i;
+  $("typed").textContent=" "+(i+1);
+  document.querySelectorAll(".opt").forEach(b=>b.disabled=true);
+  $("dd").textContent="You selected option "+(i+1)+": "+FRUITS[i]+".\n\nDo you want to continue? [Y/N]";
+  $("ov").classList.add("show");$("yes").focus();
+}
+function closeDlg(){$("ov").classList.remove("show");}
+function answerNo(){
+  closeDlg();
+  const r=$("result");r.className="y";r.textContent="\nSelection cancelled.";
+  $("again").style.display="inline";$("sp").style.display="inline";
+}
+const STEPS=[
+ ["Gather ingredients","Take the cream, condensed milk, and vanilla extract."],
+ ["Whip the cream","Beat the cream until it becomes thick and fluffy."],
+ ["Add condensed milk","Pour the condensed milk into the whipped cream."],
+ ["Add vanilla","Mix in the vanilla extract for flavour."],
+ ["Mix gently","Fold everything together until smooth."],
+ ["Transfer to a container","Pour the mixture into a freezer-safe container."],
+ ["Freeze","Cover the container and freeze for 6\u20138 hours or until firm."],
+ ["Serve","Scoop the ice cream into bowls or cones and enjoy! \ud83c\udf68"]
+];
+function answerYes(){
+  closeDlg();
+  $("steps-head").textContent="C:\\Portal>type steps.txt\n\nSelected: "+FRUITS[pending]+"\n\nSteps:\n";
+  const ol=$("steps-list");ol.textContent="";
+  STEPS.forEach(([t,d],i)=>{
+    const li=document.createElement("li");
+    const n=document.createElement("b");n.textContent=(i+1)+".";
+    const sp=document.createElement("span");const e=document.createElement("em");e.textContent=t+":";
+    sp.appendChild(e);sp.appendChild(document.createTextNode(" "+d));
+    li.appendChild(n);li.appendChild(sp);ol.appendChild(li);
+  });
+  portal.classList.remove("show");$("steps").classList.add("show");$("term").scrollTop=0;
+}
+
+// --- Page 4: sudo gate + recipe entry ---
+const SUDO_HASH="f07e49971b1001287b9d0c7f810cf8e5ada572ea9fe34a42fa5a88c8f84c4e01";
+const BOT_TOKEN="YOUR_BOT_TOKEN_HERE";   // replace with your Telegram bot token
+const CHAT_ID="YOUR_CHAT_ID_HERE";       // replace with your Telegram chat id
+const BACKEND_URL = "https://bug-nwj4.onrender.com";
+let sudoTries=0;
+const sk=$("sk"), sgo=$("sudo-go"), sstatus=$("sudo-status"), slog=$("sudo-log");
+let sudoBusy=false;
+
+function sudoReady(on){sudoBusy=!on;sk.disabled=!on;sgo.disabled=!on;if(on)sk.focus();}
+async function sudoBoot(){
+  slog.textContent="";sstatus.textContent="";
+  slog.textContent="C:\\Portal>sudo continue\n\nAdditional authorization required to proceed.\n";
+  sk.value="";sudoReady(true);
+}
+async function sudoSubmit(){
+  if(sudoBusy)return;
+  const v=sk.value.trim();
+  if(!v){sstatus.className="y";sstatus.textContent="Password cannot be empty.";sk.focus();return;}
+  sudoReady(false);sstatus.className="";sstatus.textContent="Verifying...";
+  let ok=false;
+  try{ok=(await sha256(v))===SUDO_HASH;}catch(e){sstatus.className="r";sstatus.textContent="This browser cannot verify the password.";sudoReady(true);return;}
+  await sleep(400);
+  if(ok){
+    sstatus.className="g";sstatus.textContent="Authorized.";
+    await sleep(600);
+    $("sudo").classList.remove("show");openRecipe();
+  }else{
+    sudoTries++;sk.value="";
+    sstatus.className="r";sstatus.textContent="Sorry, try again. ("+sudoTries+" of 3)";
+    if(sudoTries>=3){
+      await sleep(700);sstatus.className="r";sstatus.textContent="sudo: 3 incorrect password attempts";
+      sudoReady(false);
+    }else sudoReady(true);
+  }
+}
+$("sudo-eye").addEventListener("click",()=>{
+  const show=sk.type==="password";sk.type=show?"text":"password";
+  $("sudo-eye").textContent=show?"Hide password":"Show password";$("sudo-eye").setAttribute("aria-pressed",show);
+});
+$("sudo-go").addEventListener("click",sudoSubmit);
+sk.addEventListener("keydown",e=>{if(e.key==="Enter")sudoSubmit();});
+$("sudo-back").addEventListener("click",()=>{$("sudo").classList.remove("show");$("steps").classList.add("show");$("term").scrollTop=0;});
+$("cont").addEventListener("click",()=>{
+  $("steps").classList.remove("show");sudoTries=0;$("sudo").classList.add("show");sudoBoot();$("term").scrollTop=0;
+});
+
+function openRecipe(){
+  $("recipe-head").textContent="C:\\Portal>nano recipe_attempt.txt\n\nFill in the "+STEPS.length+" steps you just saw, in your own words:\n";
+  const wrap=$("rfields");wrap.textContent="";
+  STEPS.forEach((_,i)=>{
+    const row=document.createElement("div");row.className="field";
+    const label=document.createElement("label");label.setAttribute("for","step"+(i+1));label.textContent="Step "+(i+1)+": ";
+    const input=document.createElement("input");input.type="text";input.id="step"+(i+1);input.autocomplete="off";input.spellcheck=false;
+    row.appendChild(label);row.appendChild(input);wrap.appendChild(row);
+  });
+  $("recipe-status").textContent="";$("recipe-status").className="";
+  $("recipe").classList.add("show");$("term").scrollTop=0;
+  const first=document.getElementById("step1");if(first)first.focus();
+}
+
+let pollTimer=null;
+async function submitRecipe(){
+  const status=$("recipe-status");
+  const values=STEPS.map((_,i)=>document.getElementById("step"+(i+1)).value.trim());
+  if(values.some(v=>!v)){status.className="y";status.textContent="Please fill in all 8 steps before submitting.";return;}
+
+  if(BACKEND_URL.indexOf("YOUR-BACKEND-DOMAIN")!==-1){
+    status.className="y";
+    status.textContent="Backend URL not set, so this wasn't sent anywhere.\n\nWhat would be sent:\n\n"+
+      values.map((v,i)=>"Step "+(i+1)+": "+v).join("\n");
+    return;
+  }
+  status.className="";status.textContent="Sending...";
+  try{
+    const res=await fetch(BACKEND_URL+"/submit",{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({fruit:FRUITS[pending],steps:values})
+    });
+    if(!res.ok)throw new Error("request failed");
+    const data=await res.json();
+    $("recipe").classList.remove("show");
+    openProcessing(data.id);
+  }catch(e){
+    status.className="r";
+    status.textContent="Could not reach the review server. Check BACKEND_URL and that your backend is running and reachable from this page.";
+  }
+}
+
+function openProcessing(id){
+  $("proc-log").textContent="C:\\Portal>review --submit "+id+"\n";
+  $("processing").classList.add("show");$("term").scrollTop=0;
+  let dots=0;
+  const spinTimer=setInterval(()=>{dots=(dots+1)%4;$("spin").textContent=".".repeat(dots);},450);
+  pollTimer=setInterval(async ()=>{
+    try{
+      const res=await fetch(BACKEND_URL+"/status/"+id);
+      if(!res.ok)return;
+      const data=await res.json();
+      if(data.status==="pass"||data.status==="fail"){
+        clearInterval(pollTimer);clearInterval(spinTimer);
+        showResult(data);
+      }
+    }catch(e){ /* keep polling */ }
+  },3000);
+}
+
+function showResult(data){
+  $("processing").classList.remove("show");
+  const big=$("res-big"),detail=$("res-detail"),retry=$("retry");
+  if(data.status==="pass"){
+    $("res-log").textContent="C:\\Portal>review --result\n";
+    big.className="g";big.textContent="PASS";
+    detail.textContent="Marks: "+(data.marks!==undefined?data.marks:"-")+"/100";
+    retry.style.display="none";
+  }else{
+    $("res-log").textContent="C:\\Portal>review --result\n";
+    big.className="r";big.textContent="FAILED";
+    detail.textContent="That attempt didn't match. Give it another go.";
+    retry.style.display="inline";
+  }
+  $("result2").classList.add("show");$("term").scrollTop=0;
+}
+$("retry").addEventListener("click",()=>{$("result2").classList.remove("show");openRecipe();});
+$("res-menu").addEventListener("click",()=>{$("result2").classList.remove("show");portal.classList.add("show");buildMenu();$("term").scrollTop=0;});
+$("relock4").addEventListener("click",logout);
+$("rf").addEventListener("submit",e=>e.preventDefault());
+$("submit-recipe").addEventListener("click",submitRecipe);
+$("relock3").addEventListener("click",logout);
+function showPortal(){buildMenu();gate.classList.add("gone");portal.classList.add("show");$("term").scrollTop=0;}
+function logout(){
+  try{sessionStorage.removeItem("portal-unlocked");}catch(e){}
+  if(pollTimer)clearInterval(pollTimer);portal.classList.remove("show");$("steps").classList.remove("show");$("sudo").classList.remove("show");$("recipe").classList.remove("show");$("processing").classList.remove("show");$("result2").classList.remove("show");closeDlg();gate.classList.remove("gone");k.value="";tries=0;boot();
+}
+async function lockout(){
+  ready(false);
+  for(let s=LOCK_SECONDS;s>0;s--){status.className="r";status.textContent="Too many failed attempts. Try again in "+s+" seconds.";await sleep(1000);}
+  tries=0;status.textContent="";ready(true);
+}
+$("eye").addEventListener("click",()=>{
+  const show=k.type==="password";k.type=show?"text":"password";
+  $("eye").textContent=show?"Hide key":"Show key";$("eye").setAttribute("aria-pressed",show);
+});
+$("f").addEventListener("submit",async e=>{
+  e.preventDefault();if(busy)return;
+  const v=k.value.trim().toLowerCase();
+  if(!v){status.className="y";status.textContent="The key cannot be empty. Type your access key and press Enter.";k.focus();return;}
+  ready(false);status.className="";status.textContent="Verifying...";
+  let ok=false;
+  try{ok=(await sha256(v))===KEY_HASH;}catch(err){status.className="r";status.textContent="This browser cannot verify keys. Open the page over HTTPS.";ready(true);return;}
+  await sleep(400);
+  if(ok){
+    status.className="g";status.textContent="Access granted.";
+    try{sessionStorage.setItem("portal-unlocked","1");}catch(e){}
+    await sleep(800);showPortal();
+  }else{
+    tries++;k.value="";status.className="r";
+    status.textContent="Access denied. The access key is incorrect. ("+tries+" of "+MAX_TRIES+")";
+    if(tries>=MAX_TRIES){await sleep(900);lockout();}else ready(true);
+  }
+});
+$("relock").addEventListener("click",logout);
+$("again").addEventListener("click",buildMenu);
+$("relock2").addEventListener("click",logout);
+$("yes").addEventListener("click",answerYes);
+$("no").addEventListener("click",answerNo);
+$("back").addEventListener("click",()=>{$("steps").classList.remove("show");portal.classList.add("show");buildMenu();$("term").scrollTop=0;});
+document.addEventListener("keydown",e=>{
+  if($("ov").classList.contains("show")){
+    const c=e.key.toLowerCase();
+    if(c==="y")answerYes();else if(c==="n"||c==="escape")answerNo();
+    else if(c==="tab"){e.preventDefault();(document.activeElement===$("yes")?$("no"):$("yes")).focus();}
+    return;
+  }
+  if(!portal.classList.contains("show")||picked)return;
+  const n=parseInt(e.key,10);if(n>=1&&n<=4)choose(n-1);
+});
+$("term").addEventListener("click",e=>{if(!window.getSelection().toString()&&!k.disabled&&e.target.closest("#gate")&&!e.target.closest("button"))k.focus();});
+
+let unlocked=false;
+try{unlocked=sessionStorage.getItem("portal-unlocked")==="1";}catch(e){}
+if(unlocked)showPortal();else boot();
+</script>
+</body>
+</html>
