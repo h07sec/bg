@@ -25,8 +25,12 @@
 import express from "express";
 import cors from "cors";
 import crypto from "crypto";
+import path from "path";
+import { fileURLToPath } from "url";
 import TelegramBot from "node-telegram-bot-api";
 import "dotenv/config";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const {
   BOT_TOKEN,
@@ -55,10 +59,10 @@ function fmtSubmission(id, s) {
   return `New recipe submission\nID: ${id}\nFruit: ${s.fruit}\n\n${lines}`;
 }
 
-// --- Root route handler ---
+// --- Root route handler (Serves access-portal.html) ---
 
 app.get("/", (req, res) => {
-  res.json({ status: "online", message: "Review Bot Backend is running!" });
+  res.sendFile(path.join(__dirname, "access-portal.html"));
 });
 
 // --- Frontend-facing API ---
